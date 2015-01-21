@@ -46,6 +46,47 @@ from django.conf import settings as django_settings
 import os
 import itertools
 
+from django_multiqueryset import MultiQuerySet as MultiQuerySetBase
+
+
+class MultiQuerySet(MultiQuerySetBase):
+    def sort(self):
+        return
+
+
+class QuerySetAttributeAdder(object):
+    def __init__(self, qs, filer_admin, request):
+        self.queryset = qs
+        self._count = self._len_qs(qs)
+        self.filer_admin = filer_admin
+        self.request = request
+
+    @staticmethod
+    def _len_qs(qs):
+        if isinstance(qs, list):
+            return len(qs)
+        return qs.count() if hasattr(qs, 'count') else len(qs)
+
+    def count(self):
+        return self._count
+
+    def __len__(self):
+        return self.count()
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            indices = (offset, stop, step) = item.indices(self.count())
+            items = [(obj, {'change': self.filer_admin.has_change_permission(self.request, obj)}) for obj in self.queryset[offset:stop]]
+            print 'FILER-PATCH:', indices
+            return items
+        elif isinstance(item, int):
+            obj = self.querysets[item]
+            return (obj,
+                    {
+                        'change': self.filer_admin.has_change_permission(self.request, obj)
+                    }
+                    )
+
 
 class AddFolderPopupForm(forms.ModelForm):
     folder = forms.HiddenInput()
@@ -299,8 +340,10 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         if folder.is_root:
             folder_qs = folder_qs.exclude(**root_exclude_kw)
 
-        folder_children += folder_qs
-        folder_files += file_qs
+        # folder_children += folder_qs
+        # folder_files += file_qs
+        folder_children = MultiQuerySet(folder_children, folder_qs)
+        folder_files = MultiQuerySet(folder_files, file_qs)
 
         try:
             permissions = {
@@ -313,7 +356,8 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             permissions = {}
         folder_files.sort()
         items = folder_children + folder_files
-        items_permissions = [(item, {'change': self.has_change_permission(request, item)}) for item in items]
+        # items_permissions = [(item, {'change': self.has_change_permission(request, item)}) for item in items]
+        items_permissions = QuerySetAttributeAdder(items, self, request)
         paginator = Paginator(items_permissions, FILER_PAGINATE_BY)
 
         # Are we moving to clipboard?
