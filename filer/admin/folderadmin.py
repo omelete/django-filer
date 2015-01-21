@@ -77,7 +77,6 @@ class QuerySetAttributeAdder(object):
         if isinstance(item, slice):
             indices = (offset, stop, step) = item.indices(self.count())
             items = [(obj, {'change': self.filer_admin.has_change_permission(self.request, obj)}) for obj in self.queryset[offset:stop]]
-            print 'FILER-PATCH:', indices
             return items
         elif isinstance(item, int):
             obj = self.querysets[item]
