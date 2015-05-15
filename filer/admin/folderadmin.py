@@ -39,7 +39,8 @@ from filer.admin.tools import  (userperms_for_request,
                                 check_folder_read_permissions)
 from filer.models import (Folder, FolderRoot, UnfiledImages, File, tools,
                           ImagesWithMissingData, FolderPermission, Image)
-from filer.settings import FILER_STATICMEDIA_PREFIX, FILER_PAGINATE_BY
+from filer.settings import (FILER_STATICMEDIA_PREFIX, FILER_PAGINATE_BY,
+                            FILER_FOLDER_ORDER_BY, FILER_FILE_ORDER_BY)
 from filer.utils.filer_easy_thumbnails import FilerActionThumbnailer
 from filer.thumbnail_processors import normalize_subject_location
 from django.conf import settings as django_settings
@@ -54,6 +55,7 @@ class MultiQuerySet(MultiQuerySetBase):
         return
 
 
+# TODO: Rename QuerySetAttributeAdder
 class QuerySetAttributeAdder(object):
     def __init__(self, qs, filer_admin, request):
         self.queryset = qs
@@ -321,8 +323,8 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             file_qs = folder.files.all()
             show_result_count = False
 
-        folder_qs = folder_qs.order_by('name')
-        file_qs = file_qs.order_by('name')
+        folder_qs = folder_qs.order_by(FILER_FOLDER_ORDER_BY)
+        file_qs = file_qs.order_by(FILER_FILE_ORDER_BY)
 
         folder_children = []
         folder_files = []
@@ -356,6 +358,7 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
         folder_files.sort()
         items = folder_children + folder_files
         # items_permissions = [(item, {'change': self.has_change_permission(request, item)}) for item in items]
+        # TODO: Rename QuerySetAttributeAdder
         items_permissions = QuerySetAttributeAdder(items, self, request)
         paginator = Paginator(items_permissions, FILER_PAGINATE_BY)
 
