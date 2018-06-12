@@ -41,6 +41,6 @@ def move_files_to_folder(files, folder):
         file_obj.folder = folder
         # signal to update omelete image gallery on all its content,
         # to be received by update_history model
-        folder_update_signal.send(sender=folder.__class__, folder=folder)
         file_obj.save()
+    folder_update_signal.send(sender=folder.__class__, folder=folder)
     return True
