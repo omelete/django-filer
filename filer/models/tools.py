@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 from filer.models import Clipboard
-from django.dispatch import Signal
+#from django.dispatch import Signal
 
 
 def discard_clipboard(clipboard):
@@ -32,13 +32,13 @@ def move_files_from_clipboard_to_folder(clipboard, folder):
     return move_files_to_folder(clipboard.files.all(), folder)
 
 # this might not be the best place to declare a signal
-folder_update_signal = Signal(providing_args=['instance', 'args', 'kwargs'])
+#folder_update_signal = Signal(providing_args=['instance', 'args', 'kwargs'])
 
 def move_files_to_folder(files, folder):
     for file_obj in files:
         file_obj.folder = folder
         # signal to update omelete image gallery on all its content,
         # to be received by update_history model
-        folder_update_signal.send(sender=folder.__class__, folder=folder)
+        #folder_update_signal.send(sender=folder.__class__, folder=folder)
         file_obj.save()
     return True
